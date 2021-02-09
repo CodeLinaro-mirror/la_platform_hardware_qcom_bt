@@ -1171,7 +1171,10 @@ userial_open:
                                         }
                                         if (!skip_init) {
                                             /*Skip if already sent*/
-                                            enable_controller_log(fd_filter, (is_ant_req || is_fm_req) );
+						if (IS_HASTINGS_SOC() || IS_HSP_SOC())
+						    enable_enh_controller_log(fd_filter, (is_ant_req || is_fm_req) );
+						else
+						    enable_controller_log(fd_filter, (is_ant_req || is_fm_req) );
                                             skip_init = true;
                                         }
                                         for (idx=0; idx < CH_MAX; idx++)
