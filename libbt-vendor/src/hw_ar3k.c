@@ -1221,6 +1221,7 @@ int hci_send_cmd(int dd, uint16_t ogf, uint16_t ocf, uint8_t plen, void *param)
     hc.opcode = htobs(cmd_opcode_pack(ogf, ocf));
     hc.plen= plen;
 
+    memset(iv, 0x00, sizeof(iv));
     iv[0].iov_base = &type;
     iv[0].iov_len  = 1;
     iv[1].iov_base = &hc;
