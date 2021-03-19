@@ -366,5 +366,6 @@ int rome_soc_init(int fd, char *bdaddr);
 int check_embedded_mode(int fd);
 int rome_get_addon_feature_list(int fd);
 void enable_controller_log(int fd, unsigned char req);
+void enable_enh_controller_log(int fd, unsigned char req);
 void cherokee_shutdown_vs_cmd(int fd);
 #endif /* HW_ROME_H */

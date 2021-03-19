@@ -2144,6 +2144,41 @@ end:
    return;
 }
 
+void enable_enh_controller_log (int fd, unsigned char wait_for_evt)
+{
+   int ret = 0;
+   /* VS command to enable enhanced controller logging to the HOST. By default it is disabled */
+   unsigned char cmd[6] = {0x01, 0x17, 0xFC, 0x02, 0x14, 0x00};
+   unsigned char rsp[HCI_MAX_EVENT_SIZE];
+   char value[PROPERTY_VALUE_MAX] = {'\0'};
+
+   property_get_bt("persist.service.bdroid.soclog", value, "false");
+
+   // value at cmd[5]: 1 - to enable, 0 - to disable
+   ret = (strcmp(value, "true") == 0) ? cmd[5] = 0x01: 0;
+   ALOGI("%s: %d", __func__, ret);
+   /* Ignore vsc evt if wait_for_evt is true */
+   if (wait_for_evt) wait_vsc_evt = FALSE;
+
+   ret = hci_send_vs_cmd(fd, (unsigned char *)cmd, rsp, 6);
+   if (ret != 6) {
+       ALOGE("%s: command failed", __func__);
+   }
+   /*Ignore hci_event if wait_for_evt is true*/
+   if (wait_for_evt)
+       goto end;
+
+   if (!unified_hci) {
+      ret = read_hci_event(fd, rsp, HCI_MAX_EVENT_SIZE);
+      if (ret < 0) {
+          ALOGE("%s: Failed to get CC for enable SoC log", __FUNCTION__);
+      }
+   }
+end:
+   wait_vsc_evt = TRUE;
+   return;
+}
+
 static bool is_extldo_enabled() {
     bool is_extldo = false;
     char extldo_prop[PROPERTY_VALUE_MAX];
