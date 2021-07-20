@@ -211,6 +211,11 @@
 #define HSP_NVM_TLV_UART_1_0_PATH         "/lib/firmware/image/hpnv10.bin"
 #define HSP_RAMPATCH_TLV_UART_2_0_PATH    "/lib/firmware/image/hpbtfw20.tlv"
 #define HSP_NVM_TLV_UART_2_0_PATH         "/lib/firmware/image/hpnv20.bin"
+#define HSP_NVM_TLV_UART_2_0_PATH_GF         "/lib/firmware/image/hpnv20.bin"
+#define HSP_RAMPATCH_TLV_UART_2_1_PATH    "/lib/firmware/image/hpbtfw21.tlv"
+#define HSP_NVM_TLV_UART_2_1_PATH         "/lib/firmware/image/hpnv21.bin"
+#define HSP_NVM_TLV_UART_2_1_PATH_GF         "/lib/firmware/image/hpnv21.bin"
+
 
 #define ROME_3_1_FW_SU  "bprm.cnss.3.1"
 #define ROME_3_2_FW_SU  "btfwp.cnss.3.2"
@@ -316,6 +321,7 @@ enum{
 	HASTINGS_PATCH_VER_0200 = 0x0200,
 	HSP_PATCH_VER_0100 = 0x0100,
 	HSP_PATCH_VER_0200 = 0x0200,
+        HSP_PATCH_VER_0201 = 0x0201,
 	ROME_PATCH_VER_0100 = 0x0100,
 	ROME_PATCH_VER_0101 = 0x0101,
 	ROME_PATCH_VER_0200 = 0x0200,
@@ -337,7 +343,11 @@ enum{
 	HASTINGS_SOC_ID_0200 = 0x400A0200,
 	HSP_SOC_ID_0100 = 0x400C0100,
 	HSP_SOC_ID_0110 = 0x400C0110,
-	HSP_SOC_ID_0200 = 0x400C0200
+	HSP_SOC_ID_0200 = 0x400C0200,
+	HSP_SOC_ID_1200 = 0x400C1200,
+	HSP_SOC_ID_1201 = 0x400C1201,
+	HSP_SOC_ID_0210 = 0x400C0210,
+	HSP_SOC_ID_1211 = 0x400C1211
 };
 
 enum{
@@ -362,6 +372,7 @@ extern int g_enable_ibs;
 //declarations
 int IS_HASTINGS_SOC(void);
 int IS_HSP_SOC(void);
+int IS_HSP_SOC_GF(void);
 int rome_soc_init(int fd, char *bdaddr);
 int check_embedded_mode(int fd);
 int rome_get_addon_feature_list(int fd);

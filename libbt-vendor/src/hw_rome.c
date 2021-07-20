@@ -2404,11 +2404,26 @@ download:
 	    } else if (IS_HSP_SOC()) {
 		    rampatch_file_path = btfw_rampatch_path;
 		    nvm_file_path = btfw_nvm_path;
-		    if (g_rom_ver == HSP_PATCH_VER_0200) {
+		    if (g_rom_ver == HSP_PATCH_VER_0201) {
+			    if (get_btfw_path(basename(HSP_RAMPATCH_TLV_UART_2_1_PATH), btfw_rampatch_path, sizeof(btfw_rampatch_path)))
+				    snprintf(btfw_rampatch_path, sizeof(btfw_rampatch_path), "%s", HSP_RAMPATCH_TLV_UART_2_1_PATH);
+			    if (IS_HSP_SOC_GF()) {
+				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_1_PATH_GF), btfw_nvm_path, sizeof(btfw_nvm_path)))
+					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_1_PATH_GF);
+			    } else {
+				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_0_PATH), btfw_nvm_path, sizeof(btfw_nvm_path)))
+					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_0_PATH);
+			    }
+		    } else if (g_rom_ver == HSP_PATCH_VER_0200) {
 			    if (get_btfw_path(basename(HSP_RAMPATCH_TLV_UART_2_0_PATH), btfw_rampatch_path, sizeof(btfw_rampatch_path)))
 				    snprintf(btfw_rampatch_path, sizeof(btfw_rampatch_path), "%s", HSP_RAMPATCH_TLV_UART_2_0_PATH);
-			    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_0_PATH), btfw_nvm_path, sizeof(btfw_nvm_path)))
-				    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_0_PATH);
+			    if (IS_HSP_SOC_GF()) {
+				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_0_PATH_GF), btfw_nvm_path, sizeof(btfw_nvm_path)))
+					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_0_PATH_GF);
+			    } else {
+				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_0_PATH), btfw_nvm_path, sizeof(btfw_nvm_path)))
+					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_0_PATH);
+			    }
 		    } else {
 			    if (get_btfw_path(basename(HSP_RAMPATCH_TLV_UART_1_0_PATH), btfw_rampatch_path, sizeof(btfw_rampatch_path)))
 				    snprintf(btfw_rampatch_path, sizeof(btfw_rampatch_path), "%s", HSP_RAMPATCH_TLV_UART_1_0_PATH);
@@ -2452,15 +2467,14 @@ int IS_HSP_SOC(void)
 {
 	if ((g_product_id & 0xffff) != (PROD_ID_HSP & 0xffff))
 		return 0;
-
-	if ((g_soc_id == HSP_SOC_ID_0100) && (g_rom_ver == HSP_PATCH_VER_0100))
+	if ((g_soc_id & 0XFFFF0000) == (HSP_SOC_ID_0200 & 0XFFFF0000))
 		return 1;
+	return 0;
+}
 
-	if ((g_soc_id == HSP_SOC_ID_0110) && (g_rom_ver == HSP_PATCH_VER_0100))
+int IS_HSP_SOC_GF(void)
+{
+	if ((g_soc_id & 0X0000FF00) == 0X1200)
 		return 1;
-
-	if ((g_soc_id == HSP_SOC_ID_0200) && (g_rom_ver == HSP_PATCH_VER_0200))
-		return 1;
-
 	return 0;
 }
