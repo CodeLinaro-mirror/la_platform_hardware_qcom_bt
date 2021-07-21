@@ -2411,8 +2411,8 @@ download:
 				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_1_PATH_GF), btfw_nvm_path, sizeof(btfw_nvm_path)))
 					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_1_PATH_GF);
 			    } else {
-				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_0_PATH), btfw_nvm_path, sizeof(btfw_nvm_path)))
-					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_0_PATH);
+				    if (get_btfw_path(basename(HSP_NVM_TLV_UART_2_1_PATH), btfw_nvm_path, sizeof(btfw_nvm_path)))
+					    snprintf(btfw_nvm_path, sizeof(btfw_nvm_path), "%s", HSP_NVM_TLV_UART_2_1_PATH);
 			    }
 		    } else if (g_rom_ver == HSP_PATCH_VER_0200) {
 			    if (get_btfw_path(basename(HSP_RAMPATCH_TLV_UART_2_0_PATH), btfw_rampatch_path, sizeof(btfw_rampatch_path)))
