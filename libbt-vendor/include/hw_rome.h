@@ -211,10 +211,10 @@
 #define HSP_NVM_TLV_UART_1_0_PATH         "/lib/firmware/image/hpnv10.bin"
 #define HSP_RAMPATCH_TLV_UART_2_0_PATH    "/lib/firmware/image/hpbtfw20.tlv"
 #define HSP_NVM_TLV_UART_2_0_PATH         "/lib/firmware/image/hpnv20.bin"
-#define HSP_NVM_TLV_UART_2_0_PATH_GF         "/lib/firmware/image/hpnv20.bin"
+#define HSP_NVM_TLV_UART_2_0_PATH_GF         "/lib/firmware/image/hpnv20g.bin"
 #define HSP_RAMPATCH_TLV_UART_2_1_PATH    "/lib/firmware/image/hpbtfw21.tlv"
 #define HSP_NVM_TLV_UART_2_1_PATH         "/lib/firmware/image/hpnv21.bin"
-#define HSP_NVM_TLV_UART_2_1_PATH_GF         "/lib/firmware/image/hpnv21.bin"
+#define HSP_NVM_TLV_UART_2_1_PATH_GF         "/lib/firmware/image/hpnv21g.bin"
 
 
 #define ROME_3_1_FW_SU  "bprm.cnss.3.1"
