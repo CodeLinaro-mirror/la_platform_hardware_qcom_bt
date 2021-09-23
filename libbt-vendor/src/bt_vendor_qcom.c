@@ -73,6 +73,7 @@
 #endif
 
 #define ENABLE_IBS_PROPERTY "bluetooth.qca.enable_ibs"
+#define ENABLE_TRIGGER_SSR_PROPERTY  "bluetooth.enable.trigger.ssr"
 
 #define CMD_TIMEOUT  0x22
 
@@ -90,6 +91,7 @@
 #define BT_SCRIPT_PATH "/etc/bluetooth/init.msm.bt.sh"
 
 int unified_hci;
+int g_enable_trigger_ssr;
 
 static void wait_for_patch_download(bool is_ant_req);
 static bool is_debug_force_special_bytes(void);
@@ -735,6 +737,12 @@ static int init(const bt_vendor_callbacks_t *cb, unsigned char *bdaddr)
 #ifdef WIFI_BT_STATUS_SYNC
     isInit = 1;
 #endif /* WIFI_BT_STATUS_SYNC */
+
+    memset(prop, 0x00, sizeof(prop));
+    property_get_bt(ENABLE_TRIGGER_SSR_PROPERTY, prop, "false");
+    if (!strcmp(prop, "true"))
+      g_enable_trigger_ssr = 1;
+    ALOGI("%s: g_enable_trigger_ssr = %d", __func__, g_enable_trigger_ssr);
 
     /* Everything successful */
     return ret;
@@ -1468,7 +1476,7 @@ static void ssr_cleanup(int reason)
     int ret;
     unsigned char trig_ssr = 0xEE;
 
-    ALOGI("++%s", __FUNCTION__);
+    ALOGI("++%s, reason = %d", __func__, reason);
 
     if (property_set_bt("wc_transport.patch_dnld_inprog", "null") < 0) {
         ALOGE("Failed to set property");
@@ -1494,6 +1502,26 @@ static void ssr_cleanup(int reason)
 
         /* Close both ANT channel */
         op(BT_VND_OP_ANT_USERIAL_CLOSE, NULL);
+#else
+	if (g_enable_trigger_ssr) {
+		if ((reason == CMD_TIMEOUT)
+		    || (reason == 0x33)   // HW/error
+		    // || (reason == 0x11)  // ENABLE timeout.
+		   ) {
+			trig_ssr = 0xEE;
+			ret = write (vnd_userial.fd, &trig_ssr, 1);
+			ALOGI("Trig_ssr is being sent to BT socket, ret %d err %s",
+			      ret, strerror(errno));
+
+			if (is_debug_force_special_bytes()) {
+				/*
+				 * Then we should send special byte to crash SOC in
+				 * WCNSS_Filter, so we do not need to power off UART here.
+				 */
+				goto out;
+			}
+		}
+	}
 #endif
         /* Close both BT channel */
         op(BT_VND_OP_USERIAL_CLOSE, NULL);
@@ -1598,11 +1626,11 @@ static bool is_debug_force_special_bytes() {
     enabled = true;
 #endif
 
-    ret = property_get_bt("wc_transport.force_special_byte", value, NULL);
+    ret = property_get_bt("wc_transport.force_special_byte", value, "false");
 
-    if (ret) {
+    if (!ret) {
         enabled = (strcmp(value, "false") ==0) ? false : true;
-        ALOGV("%s: wc_transport.force_special_byte: %s, enabled: %d ",
+        ALOGI("%s: wc_transport.force_special_byte: %s, enabled: %d ",
             __func__, value, enabled);
     }
 
