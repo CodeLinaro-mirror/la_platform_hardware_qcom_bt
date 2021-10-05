@@ -1,5 +1,10 @@
 # sources and intermediate files are separated
 
+root_datadir = "/data"
+
+libbt_userfsdatadir  = $(root_datadir)/misc/bluetooth
+libbt_userfsdata_SCRIPTS = ./init.msm.bt.sh
+
 AM_CFLAGS = -Wall \
         -Wundef \
         -Wstrict-prototypes \
@@ -9,7 +14,6 @@ AM_CFLAGS = -Wall \
         -DBT_NV_SUPPORT
 
 AM_CPPFLAGS = -Iinclude \
-        -I${WORKSPACE}/system/bt/hci/include \
         -DBT_NV_SUPPORT
 
 if MDM_ROME
