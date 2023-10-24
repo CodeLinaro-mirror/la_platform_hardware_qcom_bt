@@ -41,6 +41,12 @@
 /******************************************************************************
 **  Constants & Macros
 ******************************************************************************/
+#if LIBBT_DISABLE_VERBOSE_LOG
+#ifdef ALOGV
+#undef ALOGV
+#define ALOGV(...)
+#endif
+#endif
 
 #ifndef VNDUSERIAL_DBG
 #define VNDUSERIAL_DBG TRUE
@@ -279,7 +285,7 @@ int userial_vendor_open(tUSERIAL_CFG *p_cfg)
         return -1;
     }
 
-    ALOGI("userial vendor open: opening %s", vnd_userial.port_name);
+    ALOGV("userial vendor open: opening %s", vnd_userial.port_name);
 
     if ((vnd_userial.fd = open(vnd_userial.port_name, O_RDWR|O_NOCTTY)) == -1)
     {
@@ -487,7 +493,7 @@ int read_hci_event(int fd, unsigned char* buf, int size)
         return -1;
     }
 
-    ALOGI("%s: Wait for Command Compete Event from SOC", __FUNCTION__);
+    ALOGV("%s: Wait for Command Compete Event from SOC", __FUNCTION__);
 
     /* The first byte identifies the packet type. For HCI event packets, it
      * should be 0x04, so we read until we get to the 0x04. */
@@ -533,7 +539,7 @@ int read_hci_event(int fd, unsigned char* buf, int size)
     if (buf[1] == VSEVENT_CODE) {
           /*Handle controller log function*/
     } else if (buf[1] == EVT_CMD_COMPLETE) {
-      ALOGD("%s: Expected CC", __func__);
+      ALOGV("%s: Expected CC", __func__);
       if (count > UNIFIED_HCI_CC_MIN_LENGTH) {
         opcode = (buf[4] | (buf[5] << 8));
         if (((HCI_VS_WIPOWER_CMD_OPCODE == opcode) && (UNIFIED_HCI_CODE == buf[6])) ||
@@ -608,7 +614,7 @@ int read_new_hci_event_sibs(int fd, unsigned char* buf, int size)
         return -1;
     }
 
-    ALOGI("%s: Wait for Command Compete Event from SOC", __FUNCTION__);
+    ALOGV("%s: Wait for Command Compete Event from SOC", __FUNCTION__);
 
     /* The first byte identifies the packet type. For HCI event packets, it
      * should be 0x04, so we read until we get to the 0x04. */

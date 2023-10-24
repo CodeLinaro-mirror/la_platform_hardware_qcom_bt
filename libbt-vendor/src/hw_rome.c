@@ -71,6 +71,13 @@ extern "C" {
 
 #define RESERVED(p)  if(p) ALOGI( "%s: reserved param", __FUNCTION__);
 
+#if LIBBT_DISABLE_VERBOSE_LOG
+#ifdef ALOGV
+#undef ALOGV
+#define ALOGV(...)
+#endif
+#endif
+
 int read_vs_hci_event(int fd, unsigned char* buf, int size);
 
 /******************************************************************************
@@ -140,7 +147,7 @@ static int get_btfw_path(char *name, char *path, int path_size)
 		l = snprintf(path, path_size, "%s/%s", *p, b);
 		if (l < path_size) {
 			if (!access(path, R_OK)) {
-				ALOGI("in %s : name = %s path = %s\n", __func__, name, path);
+				ALOGV("in %s : name = %s path = %s\n", __func__, name, path);
 				return 0;
 			}
 		}
@@ -220,14 +227,14 @@ int get_vs_hci_event(unsigned char *rsp)
     unsigned char tu8;
 
     if( (rsp[EVENTCODE_OFFSET] == VSEVENT_CODE) || (rsp[EVENTCODE_OFFSET] == EVT_CMD_COMPLETE))
-        ALOGI("%s: Received HCI-Vendor Specific event", __FUNCTION__);
+        ALOGV("%s: Received HCI-Vendor Specific event", __FUNCTION__);
     else {
         ALOGI("%s: Failed to receive HCI-Vendor Specific event", __FUNCTION__);
         err = -EIO;
         goto failed;
     }
     paramlen = rsp[EVT_PLEN];
-    ALOGI("%s: Parameter Length: 0x%x", __func__, paramlen);
+    ALOGV("%s: Parameter Length: 0x%x", __func__, paramlen);
     if (!unified_hci) {
       ocf = rsp[CMD_RSP_OFFSET];
       subOpcode = rsp[RSP_TYPE_OFFSET];
@@ -240,18 +247,21 @@ int get_vs_hci_event(unsigned char *rsp)
       ogf = opcode >> 10;
       status = rsp[6];
       subOpcode = rsp[7];
-      ALOGI("%s: Opcode: 0x%x", __func__, opcode);
-      ALOGI("%s: ocf: 0x%x", __func__, ocf);
-      ALOGI("%s: ogf: 0x%x", __func__, ogf);
-      ALOGI("%s: Status: 0x%x", __func__, status);
-      ALOGI("%s: Sub-Opcode: 0x%x", __func__, subOpcode);
+      ALOGV("%s: Opcode: 0x%x", __func__, opcode);
+      if (subOpcode != EDL_PATCH_TLV_REQ_CMD)
+          ALOGI("%s: ocf: 0x%x", __func__, ocf);
+      ALOGV("%s: ogf: 0x%x", __func__, ogf);
+      if (subOpcode != EDL_PATCH_TLV_REQ_CMD) {
+          ALOGI("%s: Status: 0x%x", __func__, status);
+          ALOGI("%s: Sub-Opcode: 0x%x", __func__, subOpcode);
+      }
     }
 
     /* Check the status of the operation */
     switch ( ocf )
     {
         case EDL_CMD_REQ_RES_EVT:
-        ALOGI("%s: Command Request Response", __FUNCTION__);
+        ALOGV("%s: Command Request Response", __FUNCTION__);
         switch(subOpcode)
         {
             case EDL_PATCH_VER_RES_EVT:
@@ -326,7 +336,7 @@ int get_vs_hci_event(unsigned char *rsp)
                 switch (err)
                     {
                     case HCI_CMD_SUCCESS:
-                        ALOGI("%s: Download Packet successfully!", __FUNCTION__);
+                        ALOGV("%s: Download Packet successfully!", __FUNCTION__);
                         break;
                     case PATCH_LEN_ERROR:
                         ALOGI("%s: Invalid patch length argument passed for EDL PATCH "
@@ -513,7 +523,7 @@ int read_vs_hci_event(int fd, unsigned char* buf, int size)
         return -1;
     }
 
-    ALOGI("%s: Wait for HCI-Vendor Specfic Event from SOC", __FUNCTION__);
+    ALOGV("%s: Wait for HCI-Vendor Specfic Event from SOC", __FUNCTION__);
 
     /* The first byte identifies the packet type. For HCI event packets, it
      * should be 0x04, so we read until we get to the 0x04. */
@@ -559,7 +569,7 @@ int read_vs_hci_event(int fd, unsigned char* buf, int size)
      if (buf[1] == VSEVENT_CODE) {
          ALOGV("VSC Event! good");
      } else if (buf[1] == EVT_CMD_COMPLETE) {
-       ALOGI("%s: Expected CC", __func__);
+       ALOGV("%s: Expected CC", __func__);
        if (count > UNIFIED_HCI_CC_MIN_LENGTH) {
          opcode = (buf[4] | (buf[5] << 8));
          if (((HCI_VS_WIPOWER_CMD_OPCODE == opcode) && (UNIFIED_HCI_CODE == buf[6])) ||
@@ -711,14 +721,22 @@ void frame_hci_cmd_pkt(
             segtNo, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
             break;
         case EDL_PATCH_TLV_REQ_CMD:
-            ALOGD("%s: Sending EDL_PATCH_TLV_REQ_CMD", __FUNCTION__);
+            if ((segtNo == 0) || (size < MAX_SIZE_PER_TLV_SEGMENT))
+                ALOGD("%s: Sending EDL_PATCH_TLV_REQ_CMD", __FUNCTION__);
+            else			
+                ALOGV("%s: Sending EDL_PATCH_TLV_REQ_CMD", __FUNCTION__);
             /* Parameter Total Length */
             cmd[3] = size +2;
 
             /* TLV Segment Length */
             cmd[5] = size;
-            ALOGD("HCI-CMD %d:\t0x%x \t0x%x \t0x%x \t0x%x \t0x%x \t0x%x",
-            segtNo, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
+            if ((segtNo == 0) || (size < MAX_SIZE_PER_TLV_SEGMENT))
+                ALOGD("HCI-CMD %d:\t0x%x \t0x%x \t0x%x \t0x%x \t0x%x \t0x%x",
+                        segtNo, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
+
+            else
+			    ALOGV("HCI-CMD %d:\t0x%x \t0x%x \t0x%x \t0x%x \t0x%x \t0x%x",
+                        segtNo, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
             offset = (segtNo * MAX_SIZE_PER_TLV_SEGMENT);
             memcpy(&cmd[6], (pdata_buffer + offset), size);
             break;
@@ -754,7 +772,7 @@ static int get_board_id_req( int fd)
 	/* Total length of the packet to be sent to the Controller */
 	size = (HCI_CMD_IND + HCI_COMMAND_HDR_SIZE + EDL_PATCH_CMD_LEN);
 
-	ALOGI("%s: Sending EDL_GET_BOARD_ID", __func__);
+	ALOGV("%s: Sending EDL_GET_BOARD_ID", __func__);
 	err = hci_send_vs_cmd(fd, (unsigned char*)cmd, rsp, size);
 	if ( err != size) {
 		ALOGE("Failed to send EDL_GET_BOARD_ID command!");
@@ -1131,7 +1149,7 @@ int rome_get_tlv_file(char *file_path)
     unsigned char data_buf[PRINT_BUF_SIZE]={0,};
     unsigned char *nvm_byte_ptr;
 
-    ALOGI("File Open (%s)", file_path);
+    ALOGV("File Open (%s)", file_path);
     pFile = fopen ( file_path , "r" );
     if (pFile==NULL) {;
         ALOGE("%s File Open Fail", file_path);
@@ -1175,15 +1193,15 @@ int rome_get_tlv_file(char *file_path)
                                                     (ptlv_header->tlv_length3 << 16));
         ALOGI("Total Length\t\t\t : %d bytes\n", ptlv_header->tlv.patch.tlv_data_len);
         ALOGI("Patch Data Length\t\t\t : %d bytes\n",ptlv_header->tlv.patch.tlv_patch_data_len);
-        ALOGI("Signing Format Version\t : 0x%x\n", ptlv_header->tlv.patch.sign_ver);
-        ALOGI("Signature Algorithm\t\t : 0x%x\n", ptlv_header->tlv.patch.sign_algorithm);
+        ALOGV("Signing Format Version\t : 0x%x\n", ptlv_header->tlv.patch.sign_ver);
+        ALOGV("Signature Algorithm\t\t : 0x%x\n", ptlv_header->tlv.patch.sign_algorithm);
         ALOGI("Event Handling\t\t\t : 0x%x\n", ptlv_header->tlv.patch.dwnd_cfg);
-        ALOGI("Reserved\t\t\t : 0x%x\n", ptlv_header->tlv.patch.reserved1);
+        ALOGV("Reserved\t\t\t : 0x%x\n", ptlv_header->tlv.patch.reserved1);
         ALOGI("Product ID\t\t\t : 0x%04x\n", ptlv_header->tlv.patch.prod_id);
         ALOGI("Rom Build Version\t\t : 0x%04x\n", ptlv_header->tlv.patch.build_ver);
         ALOGI("Patch Version\t\t : 0x%04x\n", ptlv_header->tlv.patch.patch_ver);
-        ALOGI("Reserved\t\t\t : 0x%x\n", ptlv_header->tlv.patch.reserved2);
-        ALOGI("Patch Entry Address\t\t : 0x%x\n", (ptlv_header->tlv.patch.patch_entry_addr));
+        ALOGV("Reserved\t\t\t : 0x%x\n", ptlv_header->tlv.patch.reserved2);
+        ALOGV("Patch Entry Address\t\t : 0x%x\n", (ptlv_header->tlv.patch.patch_entry_addr));
         ALOGI("====================================================");
 
     } else if(ptlv_header->tlv_type == TLV_TYPE_NVM) {
@@ -1200,11 +1218,11 @@ int rome_get_tlv_file(char *file_path)
        for(nvm_byte_ptr=(unsigned char *)(nvm_ptr = &(ptlv_header->tlv.nvm)), nvm_index=0;
              nvm_index < nvm_length ; nvm_ptr = (tlv_nvm_hdr *) nvm_byte_ptr)
        {
-            ALOGI("TAG ID\t\t\t : %d", nvm_ptr->tag_id);
+            ALOGV("TAG ID\t\t\t : %d", nvm_ptr->tag_id);
             nvm_tag_len = nvm_ptr->tag_len;
-            ALOGI("TAG Length\t\t\t : %d", nvm_tag_len);
-            ALOGI("TAG Pointer\t\t\t : %d", nvm_ptr->tag_ptr);
-            ALOGI("TAG Extended Flag\t\t : %d", nvm_ptr->tag_ex_flag);
+            ALOGV("TAG Length\t\t\t : %d", nvm_tag_len);
+            ALOGV("TAG Pointer\t\t\t : %d", nvm_ptr->tag_ptr);
+            ALOGV("TAG Extended Flag\t\t : %d", nvm_ptr->tag_ex_flag);
 
             /* Increase nvm_index to NVM data */
             nvm_index+=sizeof(tlv_nvm_hdr);
@@ -1225,7 +1243,7 @@ int rome_get_tlv_file(char *file_path)
             for(i =0;(i<nvm_ptr->tag_len && (i*3 + 2) <PRINT_BUF_SIZE);i++)
                 snprintf((char *) data_buf, PRINT_BUF_SIZE, "%s%.02x ", (char *)data_buf, *(nvm_byte_ptr + i));
 
-            ALOGI("TAG Data\t\t\t : %s", data_buf);
+            ALOGV("TAG Data\t\t\t : %s", data_buf);
 
             /* Clear buffer */
             memset(data_buf, 0x0, PRINT_BUF_SIZE);
@@ -1250,7 +1268,10 @@ int rome_tlv_dnld_segment(int fd, int index, int seg_size, unsigned char wait_cc
     unsigned char cmd[HCI_MAX_CMD_SIZE];
     unsigned char rsp[HCI_MAX_EVENT_SIZE];
 
-    ALOGI("%s: Downloading TLV Patch segment no.%d, size:%d", __FUNCTION__, index, seg_size);
+    if ((index == 0) || (seg_size < MAX_SIZE_PER_TLV_SEGMENT))
+        ALOGI("%s: Downloading TLV Patch segment no.%d, size:%d", __FUNCTION__, index, seg_size);
+    else
+        ALOGV("%s: Downloading TLV Patch segment no.%d, size:%d", __FUNCTION__, index, seg_size);
 
     /* Frame the HCI CMD PKT to be sent to Controller*/
     frame_hci_cmd_pkt(cmd, EDL_PATCH_TLV_REQ_CMD, 0, index, seg_size);
@@ -1280,7 +1301,10 @@ int rome_tlv_dnld_segment(int fd, int index, int seg_size, unsigned char wait_cc
       }
     }
 
-    ALOGI("%s: Successfully downloaded patch segment: %d", __FUNCTION__, index);
+	if ((index == 0) || (seg_size < MAX_SIZE_PER_TLV_SEGMENT))
+            ALOGI("%s: Successfully downloaded patch segment: %d", __FUNCTION__, index);
+        else
+            ALOGV("%s: Successfully downloaded patch segment: %d", __FUNCTION__, index);
     return err;
 }
 
@@ -1422,6 +1446,7 @@ int rome_download_tlv_file(int fd)
 
     /* Rampatch TLV file Downloading */
     pdata_buffer = NULL;
+    ALOGI("%s: Start to download rampatch FILE : %s", __func__, rampatch_file_path);
     if((tlv_size = rome_get_tlv_file(rampatch_file_path)) < 0)
         goto error;
 
@@ -1432,11 +1457,12 @@ int rome_download_tlv_file(int fd)
         free (pdata_buffer);
         pdata_buffer = NULL;
     }
+    ALOGI("%s: Download rampatch successfully", __func__);
+
 nvm_download:
     if (dl_fw_bid_enable)
 	    if (get_board_id_req(fd) >= 0)
 		    get_nvm_path_bid(nvm_file_path, btfw_nvm_path, sizeof(btfw_nvm_path));
-    ALOGI("%s: NVM FILE is %s", __func__, nvm_file_path);
 
     if(!nvm_file_path) {
         ALOGI("%s: nvm file is not available", __FUNCTION__);
@@ -1445,12 +1471,14 @@ nvm_download:
     }
 
    /* NVM TLV file Downloading */
+    ALOGI("%s: Start to download NVM FILE : %s", __func__, nvm_file_path);
     if((tlv_size = rome_get_tlv_file(nvm_file_path)) <= 0)
         goto error;
 
     if((err =rome_tlv_dnld_req(fd, tlv_size)) <0 )
         goto error;
 
+    ALOGI("%s: Download NVM successfully", __func__);
 error:
     if (pdata_buffer != NULL)
         free (pdata_buffer);
@@ -2364,7 +2392,7 @@ download:
                 ALOGE("%s: Download TLV file failed!", __FUNCTION__);
                 goto error;
             }
-            ALOGI("%s: Download TLV file successfully ", __FUNCTION__);
+            ALOGI("%s: Download firmware files successfully ", __FUNCTION__);
 
             /* Get SU FM label information */
             if((err = rome_get_build_info_req(fd)) <0){

@@ -52,6 +52,8 @@
 #define LOG_ERROR(fmt, arg...) syslog (LOG_ERR, LOG_TAG fmt, ##arg)
 #endif
 
+#define LIBBT_DISABLE_VERBOSE_LOG 1
+
 #ifndef FALSE
 #define FALSE  0
 #endif
