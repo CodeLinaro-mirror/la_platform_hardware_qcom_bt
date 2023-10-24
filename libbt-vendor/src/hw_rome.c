@@ -62,7 +62,7 @@ extern "C" {
 #ifdef ANDROID
 #define BT_VERSION_FILEPATH "/data/misc/bluedroid/bt_fw_version.txt"
 #else
-#define BT_VERSION_FILEPATH "/etc/data/misc/bluedroid/bt_fw_version.txt"
+#define BT_VERSION_FILEPATH "/data/misc/bluetooth/bt_fw_version.txt"
 #endif
 
 #ifdef __cplusplus
@@ -94,6 +94,7 @@ uint32_t g_soc_id;
 int g_enable_ibs = 1;
 static int dl_fw_bid_enable = 0;
 static unsigned char board_id_str[16];
+static uint8_t g_board_id[2];
 unsigned char gTlv_type;
 unsigned char gTlv_dwndCfg;
 static unsigned int wipower_flag = 0;
@@ -173,6 +174,9 @@ static int get_nvm_path_bid(char *nvm_name, char *nvm_path, int nvm_path_size)
 		snprintf(nvm_path, nvm_path_size, "%s", nvm_path_output);
 		return 0;
 	}
+    if (g_board_id[0] | g_board_id[1])
+      ALOGE("critical ERROR: Failed to find board id specified NVM: %s", nvm_bid);
+
 	if (!get_btfw_path(nvm_base, nvm_path_output, sizeof(nvm_path_output))) {
 		snprintf(nvm_path, nvm_path_size, "%s", nvm_path_output);
 		return 0;
@@ -314,7 +318,7 @@ int get_vs_hci_event(unsigned char *rsp)
                      ALOGI("\t unified Current SOC Version\t\t: 0x%08x", g_soc_id);
                    }
                  }
-                 if (NULL != (btversionfile = fopen(BT_VERSION_FILEPATH, "wb"))) {
+                 if (NULL != (btversionfile = fopen(BT_VERSION_FILEPATH, "w+"))) {
                    fprintf(btversionfile, "Bluetooth Controller Product ID    : 0x%08x\n", g_product_id);
                    fprintf(btversionfile, "Bluetooth Controller Patch Version : 0x%04x\n", patchversion);
                    fprintf(btversionfile, "Bluetooth Controller Build Version : 0x%04x\n", g_rom_ver);
@@ -374,7 +378,8 @@ int get_vs_hci_event(unsigned char *rsp)
 
                 ALOGI("BT SoC FW SU Build info: %s, %d", build_label, build_lbl_len);
                 if (NULL != (btversionfile = fopen(BT_VERSION_FILEPATH, "a+b"))) {
-                    fprintf(btversionfile, "Bluetooth Contoller SU Build info  : %s\n", build_label);
+                    fprintf(btversionfile, "EDL_GET_BOARD_ID : 0x%02x 0x%02x\n", g_board_id[0], g_board_id[1]);
+                    fprintf(btversionfile, "EDL_GET_BUILD_INFO : %s\n", build_label);
                     fclose(btversionfile);
                 } else {
                     ALOGI("Failed to dump  FW SU build info. Errno:%d", errno);
@@ -386,6 +391,7 @@ int get_vs_hci_event(unsigned char *rsp)
                 uint8_t lsbBoardId = 0;
                 uint8_t boardIdLen = 0;
                 memset(board_id_str, 0x00, sizeof(board_id_str));
+                memset(g_board_id, 0x00, sizeof(g_board_id));
 
                 paramlen = (uint8_t)rsp[EVT_PLEN];
                 if (unified_hci) {
@@ -411,6 +417,8 @@ int get_vs_hci_event(unsigned char *rsp)
                   break;
                 }
 
+                g_board_id[0] = msbBoardId;
+				g_board_id[1] = lsbBoardId;
                 ALOGI("%s: Board Id %x %x!!", __func__, msbBoardId, lsbBoardId);
                 if (msbBoardId == 0x00) {
                   board_id_str[0] = convert_2_ascii((lsbBoardId & 0xF0) >> 4);
