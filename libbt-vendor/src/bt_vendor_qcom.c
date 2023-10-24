@@ -398,7 +398,7 @@ void stop_hci_filter() {
            property_get_bt(BT_VND_FILTER_START, value, "false");
            if (strcmp(value, "false") == 0) {
                ALOGI("%s: WCNSS_FILTER stopped", __func__);
-               usleep(STOP_WAIT_TIMEOUT * 10);
+//               usleep(STOP_WAIT_TIMEOUT * 10);
                break;
            } else {
                /*sleep of 1ms, This should give enough time for FILTER to
@@ -439,10 +439,14 @@ int start_hci_filter() {
              init_success = 1;
              break;
           } else {
+#if 0
              usleep(WAIT_TIMEOUT);
+#else
+		     usleep(80000);
+#endif
           }
         }
-        ALOGV("start_hcifilter status:%d after %f seconds \n", init_success, 0.2*i);
+        ALOGV("start_hcifilter status:%d after %f seconds \n", init_success, 0.08*i);
 
         ALOGV("%s: Exit ", __func__);
         return init_success;
@@ -750,6 +754,17 @@ static int init(const bt_vendor_callbacks_t *cb, unsigned char *bdaddr)
     if (!strcmp(prop, "true"))
       g_enable_trigger_ssr = 1;
     ALOGI("%s: g_enable_trigger_ssr = %d", __func__, g_enable_trigger_ssr);
+
+   {
+       char value[PROPERTY_VALUE_MAX] = {'\0'};
+
+	   memset(value, 0x00, sizeof(value));
+       property_get_bt(BT_VND_FILTER_START, value, "false");
+	   if (strcmp(value, "true") && strcmp(value, "false")) {
+           property_set_bt(BT_VND_FILTER_START, "false");
+		   ALOGI("%s: property_set_bt(%s, %s)", __func__, BT_VND_FILTER_START, "false");
+	   }
+   }
 
     /* Everything successful */
     return ret;
