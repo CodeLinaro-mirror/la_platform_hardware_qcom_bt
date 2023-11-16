@@ -53,6 +53,13 @@
 #include "bt_vendor_lib.h"
 #include <sys/ioctl.h>
 
+#if LIBBT_DISABLE_VERBOSE_LOG
+#ifdef ALOGV
+#undef ALOGV
+#define ALOGV(...)
+#endif
+#endif
+
 #define WAIT_TIMEOUT 200000
 #define BT_VND_OP_GET_LINESPEED 30
 
@@ -235,7 +242,7 @@ static int get_bt_soc_type()
     int ret = 0;
     char bt_soc_type[PROPERTY_VALUE_MAX];
 
-    ALOGI("bt-vendor : get_bt_soc_type");
+    ALOGV("bt-vendor : get_bt_soc_type");
 
     ret = property_get_bt("qcom.bluetooth.soc", bt_soc_type, NULL);
     if (!ret) {
@@ -391,7 +398,7 @@ void stop_hci_filter() {
            property_get_bt(BT_VND_FILTER_START, value, "false");
            if (strcmp(value, "false") == 0) {
                ALOGI("%s: WCNSS_FILTER stopped", __func__);
-               usleep(STOP_WAIT_TIMEOUT * 10);
+//               usleep(STOP_WAIT_TIMEOUT * 10);
                break;
            } else {
                /*sleep of 1ms, This should give enough time for FILTER to
@@ -432,10 +439,14 @@ int start_hci_filter() {
              init_success = 1;
              break;
           } else {
+#if 0
              usleep(WAIT_TIMEOUT);
+#else
+		     usleep(80000);
+#endif
           }
         }
-        ALOGV("start_hcifilter status:%d after %f seconds \n", init_success, 0.2*i);
+        ALOGV("start_hcifilter status:%d after %f seconds \n", init_success, 0.08*i);
 
         ALOGV("%s: Exit ", __func__);
         return init_success;
@@ -700,7 +711,7 @@ static int init(const bt_vendor_callbacks_t *cb, unsigned char *bdaddr)
     memset(&name, 0, sizeof(struct sockaddr_un));
     name.sun_family = AF_UNIX;
     strlcpy(name.sun_path, SOCKETNAME, sizeof(name.sun_path));
-    ALOGE("connecting to %s, fd = %d", SOCKETNAME, bt_prop_socket);
+    ALOGI("connecting to %s, fd = %d", SOCKETNAME, bt_prop_socket);
     len = sizeof(name.sun_family) + strlen(name.sun_path);
     /*Connect to the server.*/
     if (connect(bt_prop_socket, (struct sockaddr *) &name, len) < 0){
@@ -744,6 +755,17 @@ static int init(const bt_vendor_callbacks_t *cb, unsigned char *bdaddr)
       g_enable_trigger_ssr = 1;
     ALOGI("%s: g_enable_trigger_ssr = %d", __func__, g_enable_trigger_ssr);
 
+   {
+       char value[PROPERTY_VALUE_MAX] = {'\0'};
+
+	   memset(value, 0x00, sizeof(value));
+       property_get_bt(BT_VND_FILTER_START, value, "false");
+	   if (strcmp(value, "true") && strcmp(value, "false")) {
+           property_set_bt(BT_VND_FILTER_START, "false");
+		   ALOGI("%s: property_set_bt(%s, %s)", __func__, BT_VND_FILTER_START, "false");
+	   }
+   }
+
     /* Everything successful */
     return ret;
 
@@ -785,7 +807,7 @@ int connect_to_local_socket(char* name) {
        struct sockaddr_un addr;
 #endif
 
-       ALOGE("%s: ACCEPT ", __func__);
+       ALOGI("%s: ACCEPT ", __func__);
        sk  = socket(AF_LOCAL, SOCK_STREAM, 0);
        if (sk < 0) {
            ALOGE("Socket creation failure");
@@ -816,7 +838,7 @@ bool is_soc_initialized() {
     char init_value[PROPERTY_VALUE_MAX];
     int ret;
 
-    ALOGI("bt-vendor : is_soc_initialized");
+    ALOGV("bt-vendor : is_soc_initialized");
 
     ret = property_get_bt(SOC_INIT_PROPERTY, init_value, NULL);
 #ifdef ANDROID
@@ -824,7 +846,7 @@ bool is_soc_initialized() {
 #else
 	if (!ret) {
 #endif
-        ALOGI("%s set to %s\n", SOC_INIT_PROPERTY, init_value);
+        ALOGV("%s set to %s\n", SOC_INIT_PROPERTY, init_value);
         if (!strncasecmp(init_value, "1", sizeof("1"))) {
             init = true;
         }
@@ -1598,7 +1620,7 @@ bool is_download_progress () {
     switch(q.soc_type)
     {
         case BT_SOC_ROME:
-            ALOGI("%s", __func__);
+            ALOGV("%s", __func__);
             property_get_bt("wc_transport.patch_dnld_inprog", inProgress, "null");
             if(strcmp(inProgress,"null") == 0) {
                 retval = false;
@@ -1667,7 +1689,7 @@ int property_get_bt(const char *key, char *value, const char *default_value)
             i++;
         }
     } while(1);
-    ALOGD("property_get_bt: key(%s) has value: %s", key, value);
+    ALOGV("property_get_bt: key(%s) has value: %s", key, value);
     if (bytes_read) {
         return 0;
     } else {
@@ -1681,7 +1703,7 @@ int property_set_bt(const char *key, const char *value)
     char prop_string[200] = {'\0'};
     int ret;
     snprintf(prop_string, sizeof(prop_string), "set_property %s %s,", key, value);
-    ALOGD("property_set_bt: setting key(%s) to value: %s\n", key, value);
+    ALOGV("property_set_bt: setting key(%s) to value: %s\n", key, value);
     ret = send(bt_prop_socket, prop_string, strlen(prop_string), 0);
     return 0;
 }
