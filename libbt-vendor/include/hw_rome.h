@@ -184,8 +184,8 @@
 #define ROME_NVM_TLV_3_0_2_PATH         "/lib/firmware/image/btnv32.bin"
 #define TF_RAMPATCH_TLV_1_0_0_PATH      "/lib/firmware/image/rampatch_tlv_tf_1.0.tlv"
 #define TF_NVM_TLV_1_0_0_PATH           "/lib/firmware/image/nvm_tlv_tf_1.0.bin"
-#define TF_RAMPATCH_TLV_1_0_1_PATH      "/lib/firmware/image/tfbtfw11.tlv"
-#define TF_NVM_TLV_1_0_1_PATH           "/lib/firmware/image/tfbtnv11.bin"
+#define TF_RAMPATCH_TLV_1_0_1_PATH      "/lib/firmware/updates/tfbtfw11.tlv"
+#define TF_NVM_TLV_1_0_1_PATH           "/lib/firmware/updates/tfbtnv11.bin"
 
 #define NAPLES_RAMPATCH_TLV_UART_1_0_PATH    "/lib/firmware/image/btfwnpla.tlv"
 #define NAPLES_NVM_TLV_UART_1_0_PATH         "/lib/firmware/image/btnvnpla.bin"
