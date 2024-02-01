@@ -10,7 +10,7 @@ AM_CFLAGS = -Wall \
 
 AM_CPPFLAGS = -Iinclude \
         -I${WORKSPACE}/system/bt/hci/include \
-        -DBT_NV_SUPPORT
+	-DBT_NV_SUPPORT
 
 if MDM_ROME
 AM_CFLAGS += -DBT_SOC_TYPE_ROME
@@ -44,7 +44,7 @@ else
  libbt_vendor_la_LDFLAGS = -shared
 endif
 
-requiredlibs = -lpthread $(SYS_LIB)/libbtnv.la
+requiredlibs = -lpthread -lbtnv
 
 library_includedir = $(pkgincludedir)\
 library_include_HEADERS = $(h_sources)
